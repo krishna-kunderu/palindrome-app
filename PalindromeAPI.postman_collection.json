@@ -1,0 +1,58 @@
+{
+	"info": {
+		"_postman_id": "0a9aeff6-e334-4c13-ab35-e3e936efd52d",
+		"name": "PalindromeAPI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19543071"
+	},
+	"item": [
+		{
+			"name": "PalindromeChecker",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"Krishna\",\r\n    \"value\": \"PAP\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9000/palindrome",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"palindrome"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetPalindromesOfUser",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9000/palindrome/Krishna",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"palindrome",
+						"Krishna"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

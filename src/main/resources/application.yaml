@@ -1,0 +1,32 @@
+quarkus:
+  log:
+    level: INFO
+  smallrye-openapi:
+    path: /swagger-ui
+  swagger-ui:
+    path: /swagger
+    always-include: true
+  http:
+    port: 9000
+  hibernate-orm:
+    database:
+      generation: update
+    log:
+      sql: true
+    dialect: org.hibernate.dialect.PostgreSQL10Dialect
+    second-level-caching-enabled: true
+    jdbc:
+      timezone: UTC
+"%local":
+  quarkus:
+    http:
+      port: 9090
+    datasource:
+      db-kind: postgresql
+      devservices: false
+      username: postgres
+      password: postgres
+      jdbc: false
+      reactive:
+        url: postgresql://localhost:5432/my_db
+        max-size: 20

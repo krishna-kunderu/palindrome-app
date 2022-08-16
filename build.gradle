@@ -1,0 +1,81 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+    id 'io.freefair.lombok' version '6.4.1'
+    id 'jacoco'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-resteasy-reactive-jsonb'
+    implementation "org.apache.commons:commons-lang3:${projectApacheCommonsVersion}"
+    implementation 'io.quarkus:quarkus-arc'
+    implementation("io.quarkus:quarkus-hibernate-validator")
+    implementation("io.quarkus:quarkus-hibernate-reactive-panache")
+    implementation("io.quarkus:quarkus-reactive-pg-client")
+    implementation('io.quarkus:quarkus-resteasy-reactive-jackson')
+    implementation("org.apache.commons:commons-collections4:${projectApacheCollectionsVersion}")
+    implementation('com.google.guava:guava')
+    implementation("io.quarkus:quarkus-config-yaml")
+    implementation("io.quarkus:quarkus-cache")
+    implementation("io.quarkus:quarkus-smallrye-openapi")
+
+    compileOnly "org.projectlombok:lombok:${projectLombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${projectLombokVersion}"
+
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.quarkus:quarkus-junit5-mockito'
+    testImplementation 'io.quarkus:quarkus-jacoco'
+    testImplementation 'io.rest-assured:rest-assured'
+    
+}
+
+group 'com.cme'
+version '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    finalizedBy jacocoTestReport
+    jacoco {
+        excludeClassLoaders = ["*QuarkusClassLoader"]
+        destinationFile = layout.buildDirectory.file("jacoco-quarkus.exec").get().asFile
+    }
+    jacocoTestReport.enabled = true
+}
+
+jacocoTestCoverageVerification {
+    executionData.setFrom("$project.buildDir/jacoco-quarkus.exec")
+    violationRules {
+        rule {
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.68
+            }
+        }
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
