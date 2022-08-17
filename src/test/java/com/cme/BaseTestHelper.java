@@ -5,70 +5,76 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
 import javax.inject.Inject;
-import java.nio.file.Paths;
+import java.io.File;
 
 public class BaseTestHelper {
     @Inject
     protected ObjectMapper objectMapper;
 
     @SneakyThrows
+    private File getFile(String path) {
+        return  new File(getClass().getClassLoader().getResource(path).toURI());
+    }
+
+    @SneakyThrows
     protected User getPalindromePayload() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/palindrome.json").toFile(), User.class);
+
+        return objectMapper.readValue(getFile("payloads/palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getPalindromeResponse() {
-        return objectMapper.readValue(Paths.get("src/test/resources/responses/palindromeResponse.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("responses/palindromeResponse.json"), User.class);
     }
 
     @SneakyThrows
     protected User getNotPalindromePayload() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/not-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/not-palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getAlphaNumbericPalindromePayload() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/alphanumeric-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/alphanumeric-palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getGetPalindromeResponse() {
-        return objectMapper.readValue(Paths.get("src/test/resources/responses/get-palindromeResponse.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("responses/get-palindromeResponse.json"), User.class);
     }
 
     @SneakyThrows
     protected User getNumberPalindromePayload() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/number-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/number-palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getNullPalindromePayload() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/null-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/null-palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getEmptyPalindromePayload() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/empty-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/empty-palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getAlphaNumericPalindromeResponse() {
-        return objectMapper.readValue(Paths.get("src/test/resources/responses/alphanumeric-palindromeResponse.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("responses/alphanumeric-palindromeResponse.json"), User.class);
     }
 
     @SneakyThrows
     protected User getSpacePalindrome() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/space-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/space-palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getLeadSpacePalindrome() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/leadspace-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/leadspace-palindrome.json"), User.class);
     }
 
     @SneakyThrows
     protected User getTrailSpacePalindrome() {
-        return objectMapper.readValue(Paths.get("src/test/resources/payloads/trailspace-palindrome.json").toFile(), User.class);
+        return objectMapper.readValue(getFile("payloads/trailspace-palindrome.json"), User.class);
     }
 
 }

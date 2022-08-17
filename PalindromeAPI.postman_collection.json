@@ -40,12 +40,12 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:9000/palindrome/Krishna",
+					"raw": "http://localhost:9090/palindrome/Krishna",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "9000",
+					"port": "9090",
 					"path": [
 						"palindrome",
 						"Krishna"
