@@ -1,0 +1,200 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "palindrome-app.fullname" . }}
+  {{- with .Values.statefulsetAnnotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  labels:
+    {{- include "palindrome-app.labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.statefulsetLabels }}
+    {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "palindrome-app.selectorLabels" . | nindent 6 }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicas }}
+  {{- end }}
+  # serviceName: {{ include "palindrome-app.fullname" . }}-headless
+  # podManagementPolicy: {{ .Values.podManagementPolicy }}
+  # updateStrategy:
+  #   type: RollingUpdate
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config-startup: {{ include (print .Template.BasePath "/configmap-startup.yaml") . | sha256sum }}
+        checksum/secrets: {{ tpl (toYaml .Values.secrets) . | sha256sum }}
+        {{- range $key, $value := .Values.podAnnotations }}
+        {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "palindrome-app.selectorLabels" . | nindent 8 }}
+        {{- if and .Values.postgresql.enabled (and .Values.postgresql.networkPolicy .Values.postgresql.networkPolicy.enabled) }}
+        {{ include "palindrome-app.postgresql.fullname" . }}-client: "true"
+        {{- end }}
+        {{- range $key, $value := .Values.podLabels }}
+        {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
+        {{- end }}
+    spec:
+    {{- if not .Values.skipInitContainers }}
+      {{- if or .Values.postgresql.enabled .Values.extraInitContainers }}
+      initContainers:
+        {{- if .Values.postgresql.enabled }}
+        - name: pgchecker
+          image: "{{ .Values.pgchecker.image.repository }}:{{ .Values.pgchecker.image.tag }}"
+          imagePullPolicy: {{ .Values.pgchecker.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.pgchecker.securityContext | nindent 12 }}
+          command:
+            - sh
+            - -c
+            - |
+              echo 'Waiting for PostgreSQL to become ready...'
+
+              until printf "." && nc -z -w 2 {{ include "palindrome-app.postgresql.fullname" . }} {{ .Values.postgresql.port }}; do
+                  sleep 2;
+              done;
+
+              echo 'PostgreSQL OK ✓'
+          resources:
+            {{- toYaml .Values.pgchecker.resources | nindent 12 }}
+        {{- end }}
+        {{- with .Values.extraInitContainers }}
+        {{- tpl . $ | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+      containers:
+        - name: palindrome-app
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.command | nindent 12 }}
+          args:
+            {{- toYaml .Values.args | nindent 12 }}
+          {{- with .Values.lifecycleHooks }}
+          lifecycle:
+          {{- tpl . $ | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if .Values.postgresql.enabled }}
+            - name: DB_VENDOR
+              value: {{ .Values.postgresql.vendor | quote }}
+            - name: DB_HOST
+              value: {{ include "palindrome-app.postgresql.fullname" . }}
+            - name: DB_PORT
+              value: {{ .Values.postgresql.port | quote }}
+            - name: DB_NAME
+              value: {{ .Values.postgresql.postgresqlDatabase | quote }}
+            - name: DB_USER
+              value: {{ .Values.postgresql.postgresqlUsername | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "palindrome-app.postgresql.fullname" . }}
+                  key: postgresql-password
+            - name: QUARKUS_PROFILE
+              value: {{ .Values.quarkus.profile }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- with .Values.extraEnvFrom }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 9090
+              protocol: TCP
+            {{- with .Values.extraPorts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 2Gi
+            limits:
+              cpu: 3000m
+              memory: 3Gi
+          volumeMounts:
+            {{- range $key, $value := .Values.startupScripts }}
+            - name: startup
+              mountPath: "/opt/jboss/startup-scripts/{{ $key }}"
+              subPath: "{{ $key }}"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+        {{- with .Values.extraContainers }}
+        {{- tpl . $ | nindent 8 }}
+        {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "palindrome-app.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      enableServiceLinks: {{ .Values.enableServiceLinks }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      volumes:
+        {{- with .Values.startupScripts }}
+        - name: startup
+          configMap:
+            name: {{ include "palindrome-app.fullname" $ }}-startup
+            defaultMode: 0555
+            items:
+              {{- range $key, $value := . }}
+              - key: {{ $key }}
+                path: {{ $key }}
+              {{- end }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- tpl . $ | nindent 8 }}
+        {{- end }}
