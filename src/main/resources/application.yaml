@@ -30,3 +30,16 @@ quarkus:
       reactive:
         url: postgresql://localhost:5432/my_db
         max-size: 20
+"%staging":
+  quarkus:
+    http:
+      port: 9090
+    datasource:
+      db-kind: ${DB_VENDOR}
+      devservices: false
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+      jdbc: false
+      reactive:
+        url: postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+        max-size: 20        

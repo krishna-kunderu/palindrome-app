@@ -1,0 +1,19 @@
+apiVersion: v1
+name: palindrome-app
+version: 1.0.0
+keywords:
+  - palindrome
+  - ci
+  - cd
+  - helm
+sources:
+  - https://github.com/krishna-kunderu/palindrome-app.git
+  - https://github.com/bitnami/charts/tree/master/bitnami/postgresql
+maintainers:
+  - name: Krishna
+    email: kvndkdeals@gmail.com
+dependencies:
+  - name: postgresql
+    version: 10.16.2
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
